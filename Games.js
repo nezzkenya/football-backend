@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-extra';
+import chromium from 'chrome-aws-lambda';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import db from './connection.js';
 puppeteer.use(StealthPlugin());
