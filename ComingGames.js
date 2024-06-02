@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer-extra";
+import chromium from 'chrome-aws-lambda';
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import db from "./connection.js";
 
@@ -8,7 +8,13 @@ export default async function ComingGames() {
   const browserInstances = [];
 
   try {
-    const browser = await puppeteer.launch({ headless: true });
+        browser = await chromium.puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
     browserInstances.push(browser);
 
     const page = await browser.newPage();
