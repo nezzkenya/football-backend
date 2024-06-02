@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import db from "./connection.js";
+import db from "./connection.js";  // Ensure this is configured to connect to your database
 
 puppeteer.use(StealthPlugin());
 
@@ -11,7 +11,7 @@ export default async function ComingGames() {
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--disable-setuid-sandbox", "--no-sandbox"],
-      executablePath: process.env.GOOGLE_CHROME_BIN  || null,
+      executablePath: process.env.GOOGLE_CHROME_BIN || null,
     });
     browserInstances.push(browser);
 
@@ -53,12 +53,20 @@ export default async function ComingGames() {
 
     // Log the results
     console.log(results);
-    await db.collection("all-games").deleteMany({});
 
+    // Ensure we handle the database connection properly
+    await db.collection("all-games").deleteMany({});
     await db.collection("all-games").insertMany(results);
-    // Close the browser
-    await browser.close();
+
   } catch (error) {
-    console.log(error);
+    console.error('Error occurred:', error);
+  } finally {
+    // Ensure all browser instances are closed
+    for (const browser of browserInstances) {
+      await browser.close();
+    }
   }
 }
+
+// Call the function if you want it to run immediately when the script is executed
+ComingGames();
