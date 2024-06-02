@@ -19,7 +19,7 @@ const intervalId2 = setInterval(main, 5 * 60 * 1000);
 const intervalId3 = setInterval(ComingGames, 60 * 60 * 1000);
 app.use(cors());
 app.use(express.json());
-app.use("/api", Routes);
+app.use("/", Routes);
 
 app.listen(PORT, () => {
   console.log(`App is running and listening on port ${PORT}`);
