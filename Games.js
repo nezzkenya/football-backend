@@ -39,10 +39,7 @@ export default async function GetGames() {
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--disable-setuid-sandbox", "--no-sandbox"],
-      executablePath:
-        process.env.NODE_ENV === "production"
-          ? process.env.PUPPETEER_EXECUTABLE_PATH
-          : puppeteer.executablePath(),
+      executablePath: puppeteer.executablePath(),
     });
     browserInstances.push(browser);
 
