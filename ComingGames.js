@@ -4,7 +4,7 @@ import db from "./connection.js";
 
 puppeteer.use(StealthPlugin());
 
-export async function ComingGames() {
+export default async function ComingGames() {
   const browserInstances = [];
 
   try {
@@ -49,11 +49,12 @@ export async function ComingGames() {
 
     // Log the results
     console.log(results);
-await db.collection("all-games").insertMany(results)
+    await db.collection("all-games").deleteMany({});
+
+    await db.collection("all-games").insertMany(results);
     // Close the browser
     await browser.close();
   } catch {
     console.log(error);
   }
 }
-ComingGames()
