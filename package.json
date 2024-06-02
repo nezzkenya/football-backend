@@ -16,7 +16,7 @@
   "scripts": {
     "test": " nodemon index.js",
     "start": "node index.js",
-"heroku-postbuild": "node index && mkdir  ./.cache && mv /app/.cache/puppeteer ./.cache" 
+"heroku-postbuild": "node index && mkdir -p ./.cache && cd ./.cache && mv /app/.cache/puppeteer ."
   },
   "keywords": [],
   "author": "",
