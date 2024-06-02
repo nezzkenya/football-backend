@@ -54,7 +54,7 @@ export default async function ComingGames() {
     await db.collection("all-games").insertMany(results);
     // Close the browser
     await browser.close();
-  } catch {
+  } catch (error) {
     console.log(error);
   }
 }
