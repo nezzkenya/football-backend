@@ -2,7 +2,7 @@ import cors from "cors";
 import express from "express";
 import "dotenv/config";
 import GetGames from "./Games.js";
-import Routes from "./Routes.js";
+import Routes from "./routes.js";
 import main from "./DeleteGames.js";
 import ComingGames from "./ComingGames.js";
 
