@@ -41,7 +41,7 @@ export default async function GetGames() {
     browser = await puppeteer.launch({
       headless: true,
       args: ["--disable-setuid-sandbox", "--no-sandbox"],
-      executablePath: process.env.GOOGLE_CHROME_BIN || null,
+      executablePath:puppeteer.executablePath(),
     });
     const page = await browser.newPage();
     browserInstances.push(browser);
