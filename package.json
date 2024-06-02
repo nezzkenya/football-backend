@@ -11,7 +11,8 @@
     "mongodb": "^6.7.0",
     "puppeteer": "^22.10.0",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "chrome":"^0.1.0"
   },
   "scripts": {
     "test": " nodemon index.js",
