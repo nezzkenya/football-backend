@@ -2,7 +2,6 @@
 import express from "express";
 import "dotenv/config";
 import GetGames from "./Games.js";
-import main from "./DeleteGames.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
