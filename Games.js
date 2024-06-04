@@ -34,14 +34,20 @@ const AddGame = async (game) => {
 };
 
 export default async function GetGames() {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--disable-setuid-sandbox", "--no-sandbox"],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-  });
+  let browser;
 
   try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--disable-setuid-sandbox", "--no-sandbox"],
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? process.env.PUPPETEER_EXECUTABLE_PATH
+          : puppeteer.executablePath(),
+    });
+
     const page = await browser.newPage();
+
     await page.goto("https://streamed.su/category/football", {
       waitUntil: "networkidle2",
       timeout: 60000,
@@ -106,10 +112,12 @@ export default async function GetGames() {
 
         for (const item of data) {
           try {
-            const iframeSrc = await page.evaluate((itemHref) => {
+            await page.goto(item.href, { waitUntil: "networkidle2" });
+
+            const iframeSrc = await page.evaluate(() => {
               const iframe = document.querySelector("iframe");
               return iframe ? iframe.src : null;
-            }, item.href);
+            });
 
             item.iframeSrc = iframeSrc;
             console.log(item);
@@ -123,6 +131,8 @@ export default async function GetGames() {
   } catch (error) {
     console.error("Error in GetGames function:", error);
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }
