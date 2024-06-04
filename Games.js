@@ -2,9 +2,10 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import db from "./connection.js";
 puppeteer.use(StealthPlugin());
+
 const AddGame = async (game) => {
   try {
-    const collection = db.collection("games"); // Assuming `db` is already connected to your MongoDB instance
+    const collection = db.collection("games");
 
     const exists = await collection.findOne({ href: game.href });
     console.log(exists);
@@ -21,7 +22,7 @@ const AddGame = async (game) => {
             stream: game.stream,
           },
         }
-      ); // Use $set to update only the specified fields
+      );
       console.log("Game updated");
     } else {
       await collection.insertOne(game);
@@ -33,20 +34,17 @@ const AddGame = async (game) => {
 };
 
 export default async function GetGames() {
-  const browserInstances = [];
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--disable-setuid-sandbox", "--no-sandbox"],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+  });
 
   try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--disable-setuid-sandbox", "--no-sandbox"],
-      executablePath:process.env.PUPPETEER_EXECUTABLE_PATH });
-    browserInstances.push(browser);
-
     const page = await browser.newPage();
-
     await page.goto("https://streamed.su/category/football", {
       waitUntil: "networkidle2",
-      timeout: 60000, // Increase timeout to 60 seconds
+      timeout: 60000,
     });
 
     const hrefs = await page.evaluate(() => {
@@ -54,18 +52,19 @@ export default async function GetGames() {
         document.querySelectorAll("div.font-bold.text-red-500")
       );
       const hrefs = divs.map((div) => div.closest("a")?.getAttribute("href"));
-      return hrefs.filter((href) => href); // Filter out null or undefined hrefs
+      return hrefs.filter((href) => href);
     });
 
     console.log(hrefs);
 
-    for (let i = 0; i < hrefs.length; i++) {
-      if (hrefs[i]) {
-        const link = `https://streamed.su${hrefs[i]}`;
+    for (const href of hrefs) {
+      if (href) {
+        const link = `https://streamed.su${href}`;
         await page.goto(link, { waitUntil: "networkidle2" });
 
         const data = await page.evaluate(() => {
           const anchors = Array.from(document.querySelectorAll("a"));
+          const now = new Date();
           return anchors
             .map((anchor) => {
               const h2 = anchor.querySelector("h2");
@@ -77,7 +76,7 @@ export default async function GetGames() {
                 }
                 return null;
               };
-              const Getlink = (href) => {
+              const getLink = (href) => {
                 const regex = /watch\/([^\/]+)\//;
                 const match = href.match(regex);
                 if (match && match[1]) {
@@ -85,7 +84,7 @@ export default async function GetGames() {
                 }
                 return null;
               };
-              const Getstream = (href) => {
+              const getStream = (href) => {
                 const regex = /\/(\d+)$/;
                 const match = href.match(regex);
                 if (match && match[1]) {
@@ -93,51 +92,37 @@ export default async function GetGames() {
                 }
                 return null;
               };
-              const now = new Date();
               return {
                 href: anchor.href,
                 Quality: h2 ? h2.textContent : null,
                 Name: getName(anchor.href),
                 date: now.toISOString(),
-                link: Getlink(anchor.href),
-                stream: Getstream(anchor.href),
+                link: getLink(anchor.href),
+                stream: getStream(anchor.href),
               };
             })
-            .filter((item) => item.Quality); // Filter out items without h2 text
+            .filter((item) => item.Quality);
         });
 
         for (const item of data) {
-          const newPage = await browser.newPage();
-          browserInstances.push(newPage);
-
           try {
-            await newPage.goto(item.href, { waitUntil: "networkidle2" });
-
-            const iframeSrc = await newPage.evaluate(() => {
+            const iframeSrc = await page.evaluate((itemHref) => {
               const iframe = document.querySelector("iframe");
               return iframe ? iframe.src : null;
-            });
+            }, item.href);
 
             item.iframeSrc = iframeSrc;
+            console.log(item);
+            await AddGame(item);
           } catch (error) {
             console.error(`Error fetching iframe for ${item.href}:`, error);
-          } finally {
-            await newPage.close();
-            browserInstances.pop();
           }
         }
-        // Group the data by Name
-        data.forEach((item) => {
-          console.log(item);
-          AddGame(item);
-        });
       }
     }
   } catch (error) {
-    console.log(error);
+    console.error("Error in GetGames function:", error);
   } finally {
-    for (const instance of browserInstances) {
-      await instance.close();
-    }
+    await browser.close();
   }
 }
