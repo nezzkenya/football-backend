@@ -1,10 +1,13 @@
-# Use the official Puppeteer image
 FROM ghcr.io/puppeteer/puppeteer:22.10.0
 
 # Set environment variables
 ENV PORT=3000 \
     URI=mongodb+srv://nezz:somo@cluster0.kvpnubw.mongodb.net/Games?retryWrites=true&w=majority \
     NODE_ENV=test
+
+# Unset potentially problematic variables
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD= \
+    PUPPETEER_EXECUTABLE_PATH=
 
 # Set the working directory
 WORKDIR /usr/src/app
