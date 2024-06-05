@@ -1,6 +1,5 @@
 import express from "express";
 import db from "./connection.js";
-import GetGames from "./Games.js";
 const router = express.Router();
 
 router.get("/allgames", async (req, res) => {
@@ -12,10 +11,6 @@ router.get("/allgames", async (req, res) => {
     res.json("an error occurred").status(500);
     console.log(error);
   }
-});
-router.get("/123", async (req, res) => {
-  GetGames();
-  res.send("games fetched");
 });
 
 router.get("/", async (req, res) => {
