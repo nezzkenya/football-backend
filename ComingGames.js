@@ -10,8 +10,7 @@ export default async function ComingGames() {
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      args: ["--disable-setuid-sandbox", "--no-sandbox"],
-      executablePath:process.env.PUPPETEER_EXECUTABLE_PATH
+      args: ["--disable-setuid-sandbox", "--no-sandbox"]
     });
     browserInstances.push(browser);
 
