@@ -1,14 +1,32 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import db from "./connection.js";
+import { createLogger, format, transports } from "winston";
+
+// Puppeteer setup
 puppeteer.use(StealthPlugin());
 
-const AddGame = async (game) => {
+// Logger setup
+const logger = createLogger({
+  level: "info",
+  format: format.combine(
+    format.timestamp(),
+    format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+    })
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: "app.log" }),
+  ],
+});
+
+// Function to add or update a game in the database
+const addGame = async (game) => {
   try {
     const collection = db.collection("games");
-
     const exists = await collection.findOne({ href: game.href });
-    console.log(exists);
+
     if (exists) {
       await collection.updateOne(
         { href: game.href },
@@ -23,27 +41,64 @@ const AddGame = async (game) => {
           },
         }
       );
-      console.log("Game updated");
+      logger.info(`Game updated: ${game.Name}`);
     } else {
       await collection.insertOne(game);
-      console.log("Game added");
+      logger.info(`Game added: ${game.Name}`);
     }
   } catch (error) {
-    console.error("Error adding or updating game:", error);
+    logger.error(`Error adding or updating game: ${error.message}`);
   }
 };
 
-export default async function GetGames() {
+// Function to extract game data from a given page
+const extractGameData = async (page) => {
+  return await page.evaluate(() => {
+    const anchors = Array.from(document.querySelectorAll("a"));
+    const now = new Date();
+
+    return anchors
+      .map((anchor) => {
+        const h2 = anchor.querySelector("h2");
+        const getName = (href) => {
+          const regex = /watch\/([^\/]+)\//;
+          const match = href.match(regex);
+          return match ? match[1].replace(/-/g, " ") : null;
+        };
+        const getLink = (href) => {
+          const regex = /watch\/([^\/]+)\//;
+          const match = href.match(regex);
+          return match ? match[1] : null;
+        };
+        const getStream = (href) => {
+          const regex = /\/(\d+)$/;
+          const match = href.match(regex);
+          return match ? match[1] : null;
+        };
+        return {
+          href: anchor.href,
+          Quality: h2 ? h2.textContent : null,
+          Name: getName(anchor.href),
+          date: now.toISOString(),
+          link: getLink(anchor.href),
+          stream: getStream(anchor.href),
+        };
+      })
+      .filter((item) => item.Quality);
+  });
+};
+
+// Function to get games from the main page
+const getGames = async () => {
   let browser;
 
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ["--disable-setuid-sandbox", "--no-sandbox"]
+      args: ["--disable-setuid-sandbox", "--no-sandbox"],
     });
 
     const page = await browser.newPage();
-
     await page.goto("https://streamed.su/category/football", {
       waitUntil: "networkidle2",
       timeout: 60000,
@@ -53,58 +108,19 @@ export default async function GetGames() {
       const divs = Array.from(
         document.querySelectorAll("div.font-bold.text-red-500")
       );
-      const hrefs = divs.map((div) => div.closest("a")?.getAttribute("href"));
-      return hrefs.filter((href) => href);
+      return divs
+        .map((div) => div.closest("a")?.getAttribute("href"))
+        .filter((href) => href);
     });
 
-    console.log(hrefs);
+    logger.info(`Found ${hrefs.length} game links.`);
 
     for (const href of hrefs) {
       if (href) {
         const link = `https://streamed.su${href}`;
         await page.goto(link, { waitUntil: "networkidle2" });
 
-        const data = await page.evaluate(() => {
-          const anchors = Array.from(document.querySelectorAll("a"));
-          const now = new Date();
-          return anchors
-            .map((anchor) => {
-              const h2 = anchor.querySelector("h2");
-              const getName = (href) => {
-                const regex = /watch\/([^\/]+)\//;
-                const match = href.match(regex);
-                if (match && match[1]) {
-                  return match[1].replace(/-/g, " ");
-                }
-                return null;
-              };
-              const getLink = (href) => {
-                const regex = /watch\/([^\/]+)\//;
-                const match = href.match(regex);
-                if (match && match[1]) {
-                  return match[1];
-                }
-                return null;
-              };
-              const getStream = (href) => {
-                const regex = /\/(\d+)$/;
-                const match = href.match(regex);
-                if (match && match[1]) {
-                  return match[1];
-                }
-                return null;
-              };
-              return {
-                href: anchor.href,
-                Quality: h2 ? h2.textContent : null,
-                Name: getName(anchor.href),
-                date: now.toISOString(),
-                link: getLink(anchor.href),
-                stream: getStream(anchor.href),
-              };
-            })
-            .filter((item) => item.Quality);
-        });
+        const data = await extractGameData(page);
 
         for (const item of data) {
           try {
@@ -116,19 +132,20 @@ export default async function GetGames() {
             });
 
             item.iframeSrc = iframeSrc;
-            console.log(item);
-            await AddGame(item);
+            await addGame(item);
           } catch (error) {
-            console.error(`Error fetching iframe for ${item.href}:`, error);
+            logger.error(`Error fetching iframe for ${item.href}: ${error.message}`);
           }
         }
       }
     }
   } catch (error) {
-    console.error("Error in GetGames function:", error);
+    logger.error(`Error in GetGames function: ${error.message}`);
   } finally {
     if (browser) {
       await browser.close();
     }
   }
-}
+};
+
+export default getGames;
