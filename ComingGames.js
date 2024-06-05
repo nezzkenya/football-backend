@@ -15,6 +15,7 @@ export default async function ComingGames() {
     browserInstances.push(browser);
 
     const page = await browser.newPage();
+    page.setDefaultNavigationTimeout(60000)
 
     await page.goto("https://streamed.su/category/football", {
       waitUntil: "networkidle2",
