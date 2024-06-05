@@ -10,7 +10,10 @@ const app = express();
 ComingGames();
 // Set interval to call GetGames every 5 minutes
 const intervalId3 = setInterval(ComingGames, 60 * 60 * 1000);
-
+app.get("/", async (req,res)=>{
+  res.send("hello there")
+}
+        );
 app.listen(PORT, () => {
   console.log(`App is running and listening on port ${PORT}`);
 });
