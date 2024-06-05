@@ -1,25 +1,9 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import db from "./connection.js";
-import { createLogger, format, transports } from "winston";
 
 // Puppeteer setup
 puppeteer.use(StealthPlugin());
-
-// Logger setup
-const logger = createLogger({
-  level: "info",
-  format: format.combine(
-    format.timestamp(),
-    format.printf(({ timestamp, level, message }) => {
-      return `${timestamp} [${level.toUpperCase()}]: ${message}`;
-    })
-  ),
-  transports: [
-    new transports.Console(),
-    new transports.File({ filename: "app.log" }),
-  ],
-});
 
 // Function to add or update a game in the database
 const addGame = async (game) => {
@@ -41,13 +25,13 @@ const addGame = async (game) => {
           },
         }
       );
-      logger.info(`Game updated: ${game.Name}`);
+      console.log(`Game updated: ${game.Name}`);
     } else {
       await collection.insertOne(game);
-      logger.info(`Game added: ${game.Name}`);
+      console.log(`Game added: ${game.Name}`);
     }
   } catch (error) {
-    logger.error(`Error adding or updating game: ${error.message}`);
+    console.error(`Error adding or updating game: ${error.message}`);
   }
 };
 
@@ -113,7 +97,7 @@ const getGames = async () => {
         .filter((href) => href);
     });
 
-    logger.info(`Found ${hrefs.length} game links.`);
+    console.log(`Found ${hrefs.length} game links.`);
 
     for (const href of hrefs) {
       if (href) {
@@ -134,13 +118,13 @@ const getGames = async () => {
             item.iframeSrc = iframeSrc;
             await addGame(item);
           } catch (error) {
-            logger.error(`Error fetching iframe for ${item.href}: ${error.message}`);
+            console.error(`Error fetching iframe for ${item.href}: ${error.message}`);
           }
         }
       }
     }
   } catch (error) {
-    logger.error(`Error in GetGames function: ${error.message}`);
+    console.error(`Error in GetGames function: ${error.message}`);
   } finally {
     if (browser) {
       await browser.close();
