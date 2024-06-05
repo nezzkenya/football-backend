@@ -11,6 +11,11 @@ GetGames();
 // Set interval to call GetGames every 5 minutes
 const intervalId = setInterval(GetGames, 8 * 60 * 1000)
 
+app.get("/", async (req,res)=>{
+  res.send("hi there")
+}
+        )
+
 app.listen(PORT, () => {
   console.log(`App is running and listening on port ${PORT}`);
 });
