@@ -16,7 +16,7 @@ ComingGames();
 // Set interval to call GetGames every 5 minutes
 const intervalId = setInterval(GetGames, 5 * 60 * 1000);
 const intervalId2 = setInterval(main, 5 * 60 * 1000);
-const intervalId3 = setInterval(ComingGames, 60 * 60 * 1000);
+const intervalId3 = setInterval(ComingGames, 5 * 60 * 1000);
 app.use(cors());
 app.use(express.json());
 app.use("/api", Routes);
