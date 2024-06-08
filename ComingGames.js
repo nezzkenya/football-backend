@@ -53,9 +53,10 @@ export default async function ComingGames() {
 
     // Log the results
     console.log(results);
-    await db.collection("all-games").deleteMany({});
-
-    await db.collection("all-games").insertMany(results);
+   const res = await db.collection("all-games").deleteMany({});
+console.log(res)
+   const resu = await db.collection("all-games").insertMany(results);
+    console.log(resu)
     // Close the browser
     await browser.close();
   } catch (error) {
