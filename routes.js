@@ -7,7 +7,7 @@ function filterGames(games) {
   const now = new Date();
   
   return games.filter(game => {
-    if (game.time === "24/7") {
+    if (game.time !== "24/7") {
       return true;
     }
     
@@ -25,7 +25,7 @@ function filterGames(games) {
 
     gameTime.setMinutes(minutes);
 
-    return gameTime <= now;
+    return gameTime => now;
   });
 }
 
