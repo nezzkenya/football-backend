@@ -3,30 +3,34 @@ import db from "./connection.js";
 const router = express.Router();
 
 // Function to filter games
-function filterGames(games) {
+function getNotStartedGames(games) {
   const now = new Date();
-  
-  return games.filter(game => {
-    if (game.time === "24/7") {
-      return true;
-    }
-    
-    const [time, period] = game.time.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    const gameTime = new Date(now);
 
+  // Filter games that have not started yet
+  const upcomingGames = games.filter(game => {
+    if (game.time === "24/7") return false;
+
+    // Parse the game time
+    const timeParts = game.time.split(' ');
+    const time = timeParts[0];
+    const period = timeParts[1];
+
+    let [hours, minutes] = time.split(':').map(Number);
     if (period === 'PM' && hours !== 12) {
-      gameTime.setHours(hours + 12);
+      hours += 12;
     } else if (period === 'AM' && hours === 12) {
-      gameTime.setHours(0);
-    } else {
-      gameTime.setHours(hours);
+      hours = 0;
     }
 
-    gameTime.setMinutes(minutes);
+    // Create a date object for the game time
+    const gameDate = new Date(now);
+    gameDate.setHours(hours, minutes, 0, 0);
 
-    return gameTime => now;
+    // Compare the game time with the current time
+    return gameDate > now;
   });
+
+  return upcomingGames;
 }
 
 
@@ -34,7 +38,7 @@ router.get("/allgames", async (req, res) => {
   try {
     const collection = await db.collection("all-games");
     const results = await collection.find({}).toArray();
-    const cg = await  filterGames(results)
+    const cg = await getNotStartedGames(results)
     res.json(cg).status(200);
   } catch (error) {
     res.json("an error occurred").status(500);
