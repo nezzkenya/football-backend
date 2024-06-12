@@ -16,12 +16,20 @@ const R2 = async () => {
   const data = await res.json()
   console.log(data)
 }
+const R3 = async () => {
+  const res = await fetch("https://youtube-project-gcqn.onrender.com",{
+    method: "GET"
+  })
+  const data = await res.json()
+  console.log(data)
+}
 // Call GetGames initially
 main();
 // Set interval to call GetGames every 5 minutes
 const intervalId2 = setInterval(main, 10 * 60 * 1000);
 const intervalId = setInterval(Refresh_1, 3 * 60 * 1000);
 const intervalId3 = setInterval(R2, 3 * 60 * 1000);
+const intervalId4 = setInterval(R3,60*1000);
 app.use(cors());
 app.use(express.json());
 app.use("/api", Routes);
