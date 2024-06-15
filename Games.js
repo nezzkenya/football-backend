@@ -2,15 +2,13 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import db from "./connection.js";
 
-// Puppeteer setup
 puppeteer.use(StealthPlugin());
 
-// Function to add or update a game in the database
-const addGame = async (game) => {
+const AddGame = async (game) => {
   try {
-    const collection = db.collection("games");
-    const exists = await collection.findOne({ href: game.href });
+    const collection = db.collection("games"); // Assuming `db` is already connected to your MongoDB instance
 
+    const exists = await collection.findOne({ href: game.href });
     if (exists) {
       await collection.updateOne(
         { href: game.href },
@@ -22,114 +20,136 @@ const addGame = async (game) => {
             iframeSrc: game.iframeSrc,
             link: game.link,
             stream: game.stream,
+            language: game.language, // Include language in the update
           },
         }
       );
-      console.log(`Game updated: ${game.Name}`);
+      console.log("Game updated");
     } else {
       await collection.insertOne(game);
-      console.log(`Game added: ${game.Name}`);
+      console.log("Game added");
     }
   } catch (error) {
-    console.error(`Error adding or updating game: ${error.message}`);
+    console.error("Error adding or updating game:", error);
   }
 };
 
-// Function to extract game data from a given page
-const extractGameData = async (page) => {
-  return await page.evaluate(() => {
-    const anchors = Array.from(document.querySelectorAll("a"));
-    const now = new Date();
-
-    return anchors
-      .map((anchor) => {
-        const h2 = anchor.querySelector("h2");
-        const getName = (href) => {
-          const regex = /watch\/([^\/]+)\//;
-          const match = href.match(regex);
-          return match ? match[1].replace(/-/g, " ") : null;
-        };
-        const getLink = (href) => {
-          const regex = /watch\/([^\/]+)\//;
-          const match = href.match(regex);
-          return match ? match[1] : null;
-        };
-        const getStream = (href) => {
-          const regex = /\/(\d+)$/;
-          const match = href.match(regex);
-          return match ? match[1] : null;
-        };
-        return {
-          href: anchor.href,
-          Quality: h2 ? h2.textContent : null,
-          Name: getName(anchor.href),
-          date: now.toISOString(),
-          link: getLink(anchor.href),
-          stream: getStream(anchor.href),
-        };
-      })
-      .filter((item) => item.Quality);
-  });
-};
-
-// Function to get games from the main page
-const getGames = async () => {
-  let browser;
+export default async function GetGames() {
+  const browserInstances = [];
 
   try {
-    browser = await puppeteer.launch({
+    const browser = await puppeteer.launch({
       headless: true,
       args: ["--disable-setuid-sandbox", "--no-sandbox"],
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? process.env.PUPPETEER_EXECUTABLE_PATH
+          : puppeteer.executablePath(),
     });
+    browserInstances.push(browser);
 
     const page = await browser.newPage();
+
     await page.goto("https://streamed.su/category/football", {
       waitUntil: "networkidle2",
-      timeout: 60000,
+      timeout: 60000, // Increase timeout to 60 seconds
     });
 
     const hrefs = await page.evaluate(() => {
       const divs = Array.from(
         document.querySelectorAll("div.font-bold.text-red-500")
       );
-      return divs
-        .map((div) => div.closest("a")?.getAttribute("href"))
-        .filter((href) => href);
+      const hrefs = divs.map((div) => div.closest("a")?.getAttribute("href"));
+      return hrefs.filter((href) => href); // Filter out null or undefined hrefs
     });
 
-    console.log(`Found ${hrefs.length} game links.`);
+    console.log(hrefs);
 
-    for (const href of hrefs) {
-      if (href) {
-        const link = `https://streamed.su${href}`;
+    for (let i = 0; i < hrefs.length; i++) {
+      if (hrefs[i]) {
+        const link = `https://streamed.su${hrefs[i]}`;
         await page.goto(link, { waitUntil: "networkidle2" });
 
-        const data = await extractGameData(page);
+        const data = await page.evaluate(() => {
+          const anchors = Array.from(document.querySelectorAll("a"));
+          return anchors
+            .map((anchor) => {
+              const h2 = anchor.querySelector("h2");
+              const getName = (href) => {
+                const regex = /watch\/([^\/]+)\//;
+                const match = href.match(regex);
+                if (match && match[1]) {
+                  return match[1].replace(/-/g, " ");
+                }
+                return null;
+              };
+              const Getlink = (href) => {
+                const regex = /watch\/([^\/]+)\//;
+                const match = href.match(regex);
+                if (match && match[1]) {
+                  return match[1];
+                }
+                return null;
+              };
+              const Getstream = (href) => {
+                const regex = /\/(\d+)$/;
+                const match = href.match(regex);
+                if (match && match[1]) {
+                  return match[1];
+                }
+                return null;
+              };
+              const getLanguage = (anchor) => {
+                const div = anchor.querySelector("div:last-child");
+                return div ? div.textContent.trim() : null;
+              };
+              const now = new Date();
+              return {
+                href: anchor.href,
+                Quality: h2 ? h2.textContent : null,
+                Name: getName(anchor.href),
+                date: now.toISOString(),
+                link: Getlink(anchor.href),
+                stream: Getstream(anchor.href),
+                language: getLanguage(anchor), // Extract language
+              };
+            })
+            .filter((item) => item.Quality); // Filter out items without h2 text
+        });
 
         for (const item of data) {
-          try {
-            await page.goto(item.href, { waitUntil: "networkidle2" });
+          const newPage = await browser.newPage();
+          browserInstances.push(newPage);
 
-            const iframeSrc = await page.evaluate(() => {
+          try {
+            await newPage.goto(item.href, { waitUntil: "networkidle2" });
+
+            const iframeSrc = await newPage.evaluate(() => {
               const iframe = document.querySelector("iframe");
               return iframe ? iframe.src : null;
             });
 
             item.iframeSrc = iframeSrc;
-            await addGame(item);
           } catch (error) {
-            console.error(`Error fetching iframe for ${item.href}: ${error.message}`);
+            console.error(`Error fetching iframe for ${item.href}:`, error);
+          } finally {
+            await newPage.close();
+            browserInstances.pop();
           }
         }
+
+        // Add or update each game in the database
+        data.forEach((item) => {
+          console.log(item);
+          AddGame(item);
+        });
       }
     }
   } catch (error) {
-    console.error(`Error in GetGames function: ${error.message}`);
+    console.log(error);
   } finally {
-    if (browser) {
-      await browser.close();
+    for (const instance of browserInstances) {
+      await instance.close();
     }
   }
-};
-
-export default getGames;
+}
