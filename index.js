@@ -33,7 +33,9 @@ const intervalId4 = setInterval(R3,60*1000);
 app.use(cors());
 app.use(express.json());
 app.use("/api", Routes);
-
+app.get("/",async (req,res)=>{
+  res.send("hi there").status(201)
+})
 app.listen(PORT, () => {
   console.log(`App is running and listening on port ${PORT}`);
 });
