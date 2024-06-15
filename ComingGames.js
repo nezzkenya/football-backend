@@ -45,9 +45,15 @@ export default async function ComingGames() {
         const timeDiv = anchor.querySelector("div:last-child");
         const time = timeDiv ? timeDiv.textContent.trim() : null;
 
+        // Extract the href attribute from the <a> tag and remove '/watch' if present
+        let href = anchor.getAttribute("href");
+        if (href) {
+          href = href.replace('/watch', ''); // Remove '/watch' from href
+        }
+
         // Push the extracted data to the array
-        if (title && time) {
-          data.push({ title, time });
+        if (title && time && href) {
+          data.push({ title, time, href });
         }
       });
 
@@ -56,9 +62,13 @@ export default async function ComingGames() {
 
     // Log the results
     console.log(results);
+
+    // Clear existing data in the collection
     await db.collection("all-games").deleteMany({});
 
+    // Insert new data into the collection
     await db.collection("all-games").insertMany(results);
+
     // Close the browser
     await browser.close();
   } catch (error) {

@@ -1,13 +1,14 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import db from "./connection.js";
+
 puppeteer.use(StealthPlugin());
+
 const AddGame = async (game) => {
   try {
     const collection = db.collection("games"); // Assuming `db` is already connected to your MongoDB instance
 
     const exists = await collection.findOne({ href: game.href });
-    console.log(exists);
     if (exists) {
       await collection.updateOne(
         { href: game.href },
@@ -19,9 +20,10 @@ const AddGame = async (game) => {
             iframeSrc: game.iframeSrc,
             link: game.link,
             stream: game.stream,
+            language: game.language, // Include language in the update
           },
         }
-      ); // Use $set to update only the specified fields
+      );
       console.log("Game updated");
     } else {
       await collection.insertOne(game);
@@ -97,6 +99,10 @@ export default async function GetGames() {
                 }
                 return null;
               };
+              const getLanguage = (anchor) => {
+                const div = anchor.querySelector("div:last-child");
+                return div ? div.textContent.trim() : null;
+              };
               const now = new Date();
               return {
                 href: anchor.href,
@@ -105,6 +111,7 @@ export default async function GetGames() {
                 date: now.toISOString(),
                 link: Getlink(anchor.href),
                 stream: Getstream(anchor.href),
+                language: getLanguage(anchor), // Extract language
               };
             })
             .filter((item) => item.Quality); // Filter out items without h2 text
@@ -130,7 +137,8 @@ export default async function GetGames() {
             browserInstances.pop();
           }
         }
-        // Group the data by Name
+
+        // Add or update each game in the database
         data.forEach((item) => {
           console.log(item);
           AddGame(item);
