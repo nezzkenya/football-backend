@@ -39,11 +39,38 @@ router.get("/allgames", async (req, res) => {
     const collection = await db.collection("all-games");
     const results = await collection.find({}).toArray();
     const cg = await getNotStartedGames(results)
-    res.json(cg).status(200);
+    const collection2 = await db.collection("games");
+
+    const pipeline = [
+      {
+        $group: {
+          _id: "$Name",
+          document: { $first: "$$ROOT" },
+        },
+      },
+      {
+        $replaceRoot: { newRoot: "$document" },
+      },
+      {
+        $project: {
+          _id: 0,
+          Name: 1,
+          link: 1,
+        },
+      },
+    ];
+
+    const results2 = await collection2.aggregate(pipeline).toArray();
+    res.json({all:cg, live : results2}).status(200);
+
   } catch (error) {
     res.json("an error occurred").status(500);
     console.log(error);
   }
+});
+router.get("/123", async (req, res) => {
+  GetGames();
+  res.send("games fetched");
 });
 
 router.get("/", async (req, res) => {
@@ -66,6 +93,7 @@ router.get("/game/:id", async (req, res) => {
         Quality: 1,
         stream: 1,
         Name: 1,
+        language:1 ,
         _id: 0,
       })
       .toArray();
@@ -81,37 +109,6 @@ router.get("/watch/:game/:stream", async (req, res) => {
   try {
     const collection = await db.collection("games");
     const results = await collection.findOne({ stream: stream, link: game });
-    res.json(results).status(200);
-  } catch (error) {
-    res.json("an error occurred").status(500);
-    console.log(error);
-  }
-});
-
-router.get("/games", async (req, res) => {
-  try {
-    const collection = await db.collection("games");
-
-    const pipeline = [
-      {
-        $group: {
-          _id: "$Name",
-          document: { $first: "$$ROOT" },
-        },
-      },
-      {
-        $replaceRoot: { newRoot: "$document" },
-      },
-      {
-        $project: {
-          _id: 0,
-          Name: 1,
-          link: 1,
-        },
-      },
-    ];
-
-    const results = await collection.aggregate(pipeline).toArray();
     res.json(results).status(200);
   } catch (error) {
     res.json("an error occurred").status(500);
