@@ -56,18 +56,72 @@ export default async function GetGames() {
     });
 
     const hrefs = await page.evaluate(() => {
-      const divs = Array.from(
-        document.querySelectorAll("div.font-bold.text-red-500")
+      const anchors = Array.from(document.querySelectorAll("a")); // Select all <a> elements
+      const now = new Date();
+      const tenMinutesLater = new Date(now.getTime() + 10 * 60000); // 10 minutes later
+console.log(now.getTime(),tenMinutesLater)
+      return anchors
+        .map((anchor) => {
+          const h2 = anchor.querySelector("h2");
+          const getName = (href) => {
+            const regex = /watch\/([^\/]+)\//;
+            const match = href.match(regex);
+            if (match && match[1]) {
+              return match[1].replace(/-/g, " ");
+            }
+            return null;
+          };
+          const Getlink = (href) => {
+            const regex = /watch\/([^\/]+)\//;
+            const match = href.match(regex);
+            if (match && match[1]) {
+              return match[1];
+            }
+            return null;
+          };
+          const Getstream = (href) => {
+            const regex = /\/(\d+)$/;
+            const match = href.match(regex);
+            if (match && match[1]) {
+              return match[1];
+            }
+            return null;
+          };
+          const getLanguage = (anchor) => {
+            const div = anchor.querySelector("div:last-child");
+            return div ? div.textContent.trim() : null;
+          };
+
+          const href = anchor.getAttribute("href");
+          const isAvailable24_7 = anchor.textContent.includes("24/7");
+          const isWithinTenMinutes =
+            new Date(anchor.getAttribute("data-time")) <= tenMinutesLater;
+
+          return {
+            href: href,
+            Quality: h2 ? h2.textContent : null,
+            Name: getName(href),
+            date: now.toISOString(),
+            link: Getlink(href),
+            stream: Getstream(href),
+            language: getLanguage(anchor), // Extract language
+            available24_7: isAvailable24_7,
+            withinTenMinutes: isWithinTenMinutes,
+          };
+        })
+        .filter((item) => item.Quality); // Filter out items without h2 text
+
+      // Filter based on availability criteria
+      return hrefs.filter(
+        (item) => item.available24_7 || item.withinTenMinutes
       );
-      const hrefs = divs.map((div) => div.closest("a")?.getAttribute("href"));
-      return hrefs.filter((href) => href); // Filter out null or undefined hrefs
     });
 
     console.log(hrefs);
 
     for (let i = 0; i < hrefs.length; i++) {
       if (hrefs[i]) {
-        const link = `https://streamed.su${hrefs[i]}`;
+        const link = `https://streamed.su${hrefs[i].href}`;
         await page.goto(link, { waitUntil: "networkidle2" });
 
         const data = await page.evaluate(() => {
