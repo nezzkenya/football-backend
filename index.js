@@ -36,7 +36,7 @@ const intervalId2 = setInterval(main, 10 * 60 * 1000);
 const intervalId = setInterval(Refresh_1, 3 * 60 * 1000);
 const intervalId3 = setInterval(R2, 3 * 60 * 1000);
 const intervalId4 = setInterval(R3,60*1000);
-const intervalId4 = setInterval(Res,2* 60*1000);
+const intervalId5 = setInterval(Res,2* 60*1000);
 app.use(cors());
 app.use(express.json());
 app.use("/api", Routes);
