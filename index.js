@@ -6,6 +6,7 @@ import main from "./DeleteGames.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+<<<<<<< HEAD
 const R3 = async () => {
   const res = await fetch("https://youtube-project-gcqn.onrender.com",{
     method: "GET"
@@ -13,11 +14,17 @@ const R3 = async () => {
   const data = await res.json()
   console.log(data)
 }
+=======
+
+>>>>>>> dc32c37ec729f2f02e3e9ae044ec4e931124a45c
 // Call GetGames initially
 main();
 // Set interval to call GetGames every 5 minutes
 const intervalId2 = setInterval(main, 10 * 60 * 1000);
+<<<<<<< HEAD
 const intervalId4 = setInterval(R3,60*1000);
+=======
+>>>>>>> dc32c37ec729f2f02e3e9ae044ec4e931124a45c
 app.use(cors());
 app.use(express.json());
 app.use("/api", Routes);
