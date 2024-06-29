@@ -59,62 +59,74 @@ export default async function GetGames() {
       const anchors = Array.from(document.querySelectorAll("a")); // Select all <a> elements
       const now = new Date();
       const tenMinutesLater = new Date(now.getTime() + 10 * 60000); // 10 minutes later
-console.log(now.getTime(),tenMinutesLater)
-      return anchors
-        .map((anchor) => {
-          const h2 = anchor.querySelector("h2");
-          const getName = (href) => {
-            const regex = /watch\/([^\/]+)\//;
-            const match = href.match(regex);
-            if (match && match[1]) {
-              return match[1].replace(/-/g, " ");
-            }
-            return null;
-          };
-          const Getlink = (href) => {
-            const regex = /watch\/([^\/]+)\//;
-            const match = href.match(regex);
-            if (match && match[1]) {
-              return match[1];
-            }
-            return null;
-          };
-          const Getstream = (href) => {
-            const regex = /\/(\d+)$/;
-            const match = href.match(regex);
-            if (match && match[1]) {
-              return match[1];
-            }
-            return null;
-          };
-          const getLanguage = (anchor) => {
-            const div = anchor.querySelector("div:last-child");
-            return div ? div.textContent.trim() : null;
-          };
 
-          const href = anchor.getAttribute("href");
-          const isAvailable24_7 = anchor.textContent.includes("24/7");
-          const isWithinTenMinutes =
-            new Date(anchor.getAttribute("data-time")) <= tenMinutesLater;
+      return anchors.map((anchor) => {
+        const h2 = anchor.querySelector("h2");
+        const getName = (href) => {
+          const regex = /watch\/([^\/]+)\//;
+          const match = href.match(regex);
+          if (match && match[1]) {
+            return match[1].replace(/-/g, " ");
+          }
+          return null;
+        };
+        const Getlink = (href) => {
+          const regex = /watch\/([^\/]+)\//;
+          const match = href.match(regex);
+          if (match && match[1]) {
+            return match[1];
+          }
+          return null;
+        };
+        const Getstream = (href) => {
+          const regex = /\/(\d+)$/;
+          const match = href.match(regex);
+          if (match && match[1]) {
+            return match[1];
+          }
+          return null;
+        };
+        const getLanguage = (anchor) => {
+          const div = anchor.querySelector("div:last-child");
+          return div ? div.textContent.trim() : null;
+        };
 
-          return {
-            href: href,
-            Quality: h2 ? h2.textContent : null,
-            Name: getName(href),
-            date: now.toISOString(),
-            link: Getlink(href),
-            stream: Getstream(href),
-            language: getLanguage(anchor), // Extract language
-            available24_7: isAvailable24_7,
-            withinTenMinutes: isWithinTenMinutes,
-          };
-        })
-        .filter((item) => item.Quality); // Filter out items without h2 text
+        const href = anchor.getAttribute("href");
+        const isAvailable24_7 = anchor.textContent.includes("24/7");
+        const timeString = anchor.getAttribute("data-time"); // Assuming this attribute contains the time in "HH:MM AM/PM" format
 
-      // Filter based on availability criteria
-      return hrefs.filter(
-        (item) => item.available24_7 || item.withinTenMinutes
-      );
+        // Check if timeString is valid before parsing
+        let isWithinTenMinutes = false;
+        if (timeString) {
+          const timeParts = timeString.split(" ");
+          if (timeParts.length === 2) {
+            const [hourMinute, period] = timeParts[0].split(":");
+            let hour = parseInt(hourMinute, 10);
+            if (period === "PM" && hour < 12) hour += 12;
+            const minute = parseInt(hourMinute, 10);
+
+            const gameTime = new Date();
+            gameTime.setHours(hour, minute, 0);
+
+            const now = new Date();
+            const tenMinutesLater = new Date(now.getTime() + 10 * 60000); // 10 minutes later
+
+            isWithinTenMinutes = gameTime <= tenMinutesLater;
+          }
+        }
+
+        return {
+          href: href,
+          Quality: h2 ? h2.textContent : null,
+          Name: getName(href),
+          date: now.toISOString(),
+          link: Getlink(href),
+          stream: Getstream(href),
+          language: getLanguage(anchor), // Extract language
+          available24_7: isAvailable24_7,
+          withinTenMinutes: isWithinTenMinutes,
+        };
+      }).filter((item) => item.Quality); // Filter out items without h2 text
     });
 
     console.log(hrefs);
@@ -126,71 +138,52 @@ console.log(now.getTime(),tenMinutesLater)
 
         const data = await page.evaluate(() => {
           const anchors = Array.from(document.querySelectorAll("a"));
-          return anchors
-            .map((anchor) => {
-              const h2 = anchor.querySelector("h2");
-              const getName = (href) => {
-                const regex = /watch\/([^\/]+)\//;
-                const match = href.match(regex);
-                if (match && match[1]) {
-                  return match[1].replace(/-/g, " ");
-                }
-                return null;
-              };
-              const Getlink = (href) => {
-                const regex = /watch\/([^\/]+)\//;
-                const match = href.match(regex);
-                if (match && match[1]) {
-                  return match[1];
-                }
-                return null;
-              };
-              const Getstream = (href) => {
-                const regex = /\/(\d+)$/;
-                const match = href.match(regex);
-                if (match && match[1]) {
-                  return match[1];
-                }
-                return null;
-              };
-              const getLanguage = (anchor) => {
-                const div = anchor.querySelector("div:last-child");
-                return div ? div.textContent.trim() : null;
-              };
-              const now = new Date();
-              return {
-                href: anchor.href,
-                Quality: h2 ? h2.textContent : null,
-                Name: getName(anchor.href),
-                date: now.toISOString(),
-                link: Getlink(anchor.href),
-                stream: Getstream(anchor.href),
-                language: getLanguage(anchor), // Extract language
-              };
-            })
-            .filter((item) => item.Quality); // Filter out items without h2 text
+
+          return anchors.map((anchor) => {
+            const h2 = anchor.querySelector("h2");
+            const getName = (href) => {
+              const regex = /watch\/([^\/]+)\//;
+              const match = href.match(regex);
+              if (match && match[1]) {
+                return match[1].replace(/-/g, " ");
+              }
+              return null;
+            };
+            const Getlink = (href) => {
+              const regex = /watch\/([^\/]+)\//;
+              const match = href.match(regex);
+              if (match && match[1]) {
+                return match[1];
+              }
+              return null;
+            };
+            const Getstream = (href) => {
+              const regex = /\/(\d+)$/;
+              const match = href.match(regex);
+              if (match && match[1]) {
+                return match[1];
+              }
+              return null;
+            };
+            const getLanguage = (anchor) => {
+              const div = anchor.querySelector("div:last-child");
+              return div ? div.textContent.trim() : null;
+            };
+            const now = new Date();
+            const link =  Getlink(anchor.href)
+            const stream = Getstream(anchor.href)
+            return {
+              href: anchor.href,
+              Quality: h2 ? h2.textContent : null,
+              Name: getName(anchor.href),
+              date: now.toISOString(),
+              link: link ,
+              stream: stream,
+              language: getLanguage(anchor), // Extract language
+              iframeSrc: `https://embedme.top/embed/${link}/${stream}`
+            };
+          }).filter((item) => item.Quality); // Filter out items without h2 text
         });
-
-        for (const item of data) {
-          const newPage = await browser.newPage();
-          browserInstances.push(newPage);
-
-          try {
-            await newPage.goto(item.href, { waitUntil: "networkidle2" });
-
-            const iframeSrc = await newPage.evaluate(() => {
-              const iframe = document.querySelector("iframe");
-              return iframe ? iframe.src : null;
-            });
-
-            item.iframeSrc = iframeSrc;
-          } catch (error) {
-            console.error(`Error fetching iframe for ${item.href}:`, error);
-          } finally {
-            await newPage.close();
-            browserInstances.pop();
-          }
-        }
 
         // Add or update each game in the database
         data.forEach((item) => {
