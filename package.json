@@ -1,27 +1,22 @@
 {
-  "name": "football",
+  "name": "football-backend",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
-  "dependencies": {
-    "axios": "^1.7.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "mongodb": "^6.7.0",
-    "puppeteer": "^22.10.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
-  },
+  "type":"module",
   "scripts": {
-    "test": " nodemon index.js",
-    "start": "node index.js"
+    "test": "nodemon index",
+    "start":"node index"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "nodemon": "^3.1.2"
+    "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
   }
 }

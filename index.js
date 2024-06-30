@@ -1,17 +1,42 @@
 import cors from "cors";
 import express from "express";
 import "dotenv/config";
-import Routes from "./routes.js";
-import main from "./DeleteGames.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
-main();
-// Set interval to call GetGames every 5 minutes
-const intervalId2 = setInterval(main, 10 * 60 * 1000);
+
+const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+// Functions
+async function fetchGames() {
+  try {
+    await fetch("https://football-backend-20qh.onrender.com");
+    console.log("Games refreshed");
+  } catch (error) {
+    console.error("Error refreshing games:", error);
+  }
+}
+
+async function fetchYouTube() {
+  try {
+    const response = await fetch("https://youtube-project-1.onrender.com");
+    const data = await response;
+    console.log(data, "\nYouTube kept alive");
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+  }
+}
+
+// Initial fetch
+fetchGames();
+fetchYouTube();
+
+// Set interval to call fetchGames and fetchYouTube every 10 minutes
+const gamesInterval = setInterval(fetchGames, REFRESH_INTERVAL);
+const youtubeInterval = setInterval(fetchYouTube, REFRESH_INTERVAL);
+
 app.use(cors());
 app.use(express.json());
-app.use("/api", Routes);
 
 app.listen(PORT, () => {
   console.log(`App is running and listening on port ${PORT}`);
