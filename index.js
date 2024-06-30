@@ -5,7 +5,7 @@ import "dotenv/config";
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 10 minutes
 
 // Functions
 async function fetchGames() {
