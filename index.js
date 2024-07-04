@@ -19,7 +19,7 @@ async function fetchGames() {
 
 async function fetchYouTube() {
   try {
-    const response = await fetch("https://youtube-project-1.onrender.com");
+    const response = await fetch("https://youtube-project-cil7.onrender.com");
     const data = await response;
     console.log(data, "\nYouTube kept alive");
   } catch (error) {
