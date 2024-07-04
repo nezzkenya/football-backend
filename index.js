@@ -5,7 +5,7 @@ import "dotenv/config";
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 10 minutes
+const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 // Functions
 async function fetchGames() {
@@ -19,7 +19,7 @@ async function fetchGames() {
 
 async function fetchYouTube() {
   try {
-    const response = await fetch("https://youtube-project-kqfs.onrender.com");
+    const response = await fetch("https://youtube-project-cil7.onrender.com");
     const data = await response;
     console.log(data, "\nYouTube kept alive");
   } catch (error) {
