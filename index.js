@@ -9,7 +9,15 @@ const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 // Functions
 
-
+async function fetchGames() {
+  try {
+    const response = await fetch("https://football-backend-20qh.onrender.com");
+    const data = await response;
+    console.log(data, "\n tg kept alive");
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+  }
+}
 async function fetchYouTube() {
   try {
     const response = await fetch("https://youtube-project-1.onrender.com");
