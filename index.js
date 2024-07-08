@@ -8,14 +8,7 @@ const app = express();
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 // Functions
-async function fetchGames() {
-  try {
-    await fetch("https://football-backend-20qh.onrender.com");
-    console.log("Games refreshed");
-  } catch (error) {
-    console.error("Error refreshing games:", error);
-  }
-}
+
 
 async function fetchYouTube() {
   try {
@@ -26,14 +19,25 @@ async function fetchYouTube() {
     console.error("Error fetching YouTube data:", error);
   }
 }
+async function fetchTg() {
+  try {
+    const response = await fetch("https://youtube-project-2-x09l.onrender.com");
+    const data = await response;
+    console.log(data, "\nYouTube kept alive");
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+  }
+}
 
 // Initial fetch
 fetchGames();
 fetchYouTube();
+fetchTg();
 
 // Set interval to call fetchGames and fetchYouTube every 10 minutes
 const gamesInterval = setInterval(fetchGames, REFRESH_INTERVAL);
 const youtubeInterval = setInterval(fetchYouTube, REFRESH_INTERVAL);
+const TgInterval = setInterval(fetchTg, REFRESH_INTERVAL);
 
 app.use(cors());
 app.use(express.json());
