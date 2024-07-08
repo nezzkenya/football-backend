@@ -29,7 +29,7 @@ async function fetchYouTube() {
 }
 async function fetchTg() {
   try {
-    const response = await fetch("https://youtube-project-2-x09l.onrender.com");
+    const response = await fetch("https://youtube-project-3-sanr.onrender.com");
     const data = await response;
     console.log(data, "\nYouTube kept alive");
   } catch (error) {
