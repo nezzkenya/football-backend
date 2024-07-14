@@ -70,31 +70,15 @@ export default async function GetGames() {
           }
           return null;
         };
-        const Getlink = (href) => {
-          const regex = /watch\/([^\/]+)\//;
-          const match = href.match(regex);
-          if (match && match[1]) {
-            return match[1];
-          }
-          return null;
-        };
-        const Getstream = (href) => {
-          const regex = /\/(\d+)$/;
-          const match = href.match(regex);
-          if (match && match[1]) {
-            return match[1];
-          }
-          return null;
-        };
-        const getLanguage = (anchor) => {
+        const getTime = (anchor) => {
           const div = anchor.querySelector("div:last-child");
           return div ? div.textContent.trim() : null;
         };
 
         const href = anchor.getAttribute("href");
         const isAvailable24_7 = anchor.textContent.includes("24/7");
-        const timeString = anchor.getAttribute("data-time"); // Assuming this attribute contains the time in "HH:MM AM/PM" format
-
+        const timeString = "10:15 AM" // Assuming this attribute contains the time in "HH:MM AM/PM" format
+console.log(timeString)
         // Check if timeString is valid before parsing
         let isWithinTenMinutes = false;
         if (timeString) {
@@ -118,13 +102,10 @@ export default async function GetGames() {
         return {
           href: href,
           Quality: h2 ? h2.textContent : null,
-          Name: getName(href),
-          date: now.toISOString(),
-          link: Getlink(href),
-          stream: Getstream(href),
-          language: getLanguage(anchor), // Extract language
+          date: now.toISOString(), // Extract language
           available24_7: isAvailable24_7,
           withinTenMinutes: isWithinTenMinutes,
+          time: getTime(anchor),
         };
       }).filter((item) => item.Quality); // Filter out items without h2 text
     });
@@ -132,14 +113,37 @@ export default async function GetGames() {
     console.log(hrefs);
 
     for (let i = 0; i < hrefs.length; i++) {
-      if (hrefs[i]) {
+      function isTimeBeforeCurrent(gameTime) {
+        const now = new Date();
+        
+        // Parse the timeString
+        const [time, period] = gameTime.split(" ");
+        const [hours, minutes] = time.split(":");
+        
+        // Convert hours to 24-hour format
+        let hours24 = parseInt(hours, 10);
+        if (period === "PM" && hours24 < 12) {
+          hours24 += 12;
+        } else if (period === "AM" && hours24 === 12) {
+          hours24 = 0; // Midnight hour
+        }
+        
+        // Create a Date object with today's date and the parsed hours and minutes
+        const timeToCompare = new Date();
+        timeToCompare.setHours(hours24, parseInt(minutes, 10), 0, 0);
+        
+        // Compare timeToCompare with current time (now)
+        return timeToCompare < now;
+      }
+      const started = await isTimeBeforeCurrent(hrefs[i].time)
+      if (hrefs[i] && (hrefs[i].available24_7 || hrefs[i].withinTenMinutes || started)) {
+        const time = hrefs[i].time
         const link = `https://streamed.su${hrefs[i].href}`;
         await page.goto(link, { waitUntil: "networkidle2" });
-
         const data = await page.evaluate(() => {
           const anchors = Array.from(document.querySelectorAll("a"));
 
-          return anchors.map((anchor) => {
+          return anchors.map((anchor,time) => {
             const h2 = anchor.querySelector("h2");
             const getName = (href) => {
               const regex = /watch\/([^\/]+)\//;
@@ -180,15 +184,15 @@ export default async function GetGames() {
               link: link ,
               stream: stream,
               language: getLanguage(anchor), // Extract language
-              iframeSrc: `https://embedme.top/embed/${link}/${stream}`
+              iframeSrc: `https://embedme.top/embed/${link}/${stream}`,
             };
           }).filter((item) => item.Quality); // Filter out items without h2 text
         });
-
         // Add or update each game in the database
         data.forEach((item) => {
-          console.log(item);
-          AddGame(item);
+          const item2 = {...item,time:time}
+          console.log(item2);
+          AddGame(item2);
         });
       }
     }
