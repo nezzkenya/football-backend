@@ -29,9 +29,22 @@ const AddGame = async (game) => {
     } else {
       await collection.insertOne(game);
       const added = await collection.find({link : game.link}).toArray()
- if(added.length === 1){
-  console.log("1st one")
- }
+      if (added.length === 1) {
+        console.log("1st one");
+        const res = await fetch("https://telegraf-five.vercel.app/api", {
+          method: "POST",
+          body: JSON.stringify(game), // Stringify the game object
+          headers: {
+            "Content-Type": "application/json" // Correct Content-Type header
+          }
+        });
+      
+        if (res.ok) {
+          console.log("Game successfully posted to the API");
+        } else {
+          console.error("Failed to post game to the API", res.statusText);
+        }
+      }      
       console.log("Game added");
     }
   } catch (error) {
