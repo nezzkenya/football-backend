@@ -27,6 +27,10 @@ const AddGame = async (game) => {
       console.log("Game updated");
     } else {
       await collection.insertOne(game);
+      const added = await collection.find({link : game.link}).toArray()
+ if(added.length === 1){
+  console.log("1st one")
+ }
       console.log("Game added");
     }
   } catch (error) {
