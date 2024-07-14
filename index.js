@@ -11,7 +11,7 @@ const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 async function fetchGames() {
   try {
-    const response = await fetch("https://football-backend-20qh.onrender.com");
+    const response = await fetch("https://football-backend-1-y85i.onrender.com");
     const data = await response;
     console.log(data, "\n tg kept alive");
   } catch (error) {
