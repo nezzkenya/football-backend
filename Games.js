@@ -21,6 +21,7 @@ const AddGame = async (game) => {
             link: game.link,
             stream: game.stream,
             language: game.language, // Include language in the update
+            time: game.time
           },
         }
       );
