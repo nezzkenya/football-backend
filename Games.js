@@ -21,31 +21,31 @@ const AddGame = async (game) => {
             link: game.link,
             stream: game.stream,
             language: game.language, // Include language in the update
-            time: game.time
+            time: game.time,
           },
         }
       );
       console.log("Game updated");
     } else {
       await collection.insertOne(game);
-      const added = await collection.find({link : game.link}).toArray()
+      console.log("Game added");
+
+      const added = await collection.find({ link: game.link }).toArray();
       if (added.length === 1) {
-        console.log("1st one");
         const res = await fetch("https://telegraf-five.vercel.app/api", {
           method: "POST",
           body: JSON.stringify(game), // Stringify the game object
           headers: {
-            "Content-Type": "application/json" // Correct Content-Type header
-          }
+            "Content-Type": "application/json", // Correct Content-Type header
+          },
         });
-      
+
         if (res.ok) {
           console.log("Game successfully posted to the API");
         } else {
           console.error("Failed to post game to the API", res.statusText);
         }
-      }      
-      console.log("Game added");
+      }
     }
   } catch (error) {
     console.error("Error adding or updating game:", error);
@@ -76,7 +76,6 @@ export default async function GetGames() {
     const hrefs = await page.evaluate(() => {
       const anchors = Array.from(document.querySelectorAll("a")); // Select all <a> elements
       const now = new Date();
-      const tenMinutesLater = new Date(now.getTime() + 10 * 60000); // 10 minutes later
 
       return anchors.map((anchor) => {
         const h2 = anchor.querySelector("h2");
@@ -95,8 +94,8 @@ export default async function GetGames() {
 
         const href = anchor.getAttribute("href");
         const isAvailable24_7 = anchor.textContent.includes("24/7");
-        const timeString = "10:15 AM" // Assuming this attribute contains the time in "HH:MM AM/PM" format
-console.log(timeString)
+        const timeString = "10:15 AM"; // Assuming this attribute contains the time in "HH:MM AM/PM" format
+
         // Check if timeString is valid before parsing
         let isWithinTenMinutes = false;
         if (timeString) {
@@ -120,7 +119,7 @@ console.log(timeString)
         return {
           href: href,
           Quality: h2 ? h2.textContent : null,
-          date: now.toISOString(), // Extract language
+          date: now.toISOString(),
           available24_7: isAvailable24_7,
           withinTenMinutes: isWithinTenMinutes,
           time: getTime(anchor),
@@ -133,11 +132,11 @@ console.log(timeString)
     for (let i = 0; i < hrefs.length; i++) {
       function isTimeBeforeCurrent(gameTime) {
         const now = new Date();
-        
+
         // Parse the timeString
         const [time, period] = gameTime.split(" ");
         const [hours, minutes] = time.split(":");
-        
+
         // Convert hours to 24-hour format
         let hours24 = parseInt(hours, 10);
         if (period === "PM" && hours24 < 12) {
@@ -145,23 +144,23 @@ console.log(timeString)
         } else if (period === "AM" && hours24 === 12) {
           hours24 = 0; // Midnight hour
         }
-        
+
         // Create a Date object with today's date and the parsed hours and minutes
         const timeToCompare = new Date();
         timeToCompare.setHours(hours24, parseInt(minutes, 10), 0, 0);
-        
+
         // Compare timeToCompare with current time (now)
         return timeToCompare < now;
       }
-      const started = await isTimeBeforeCurrent(hrefs[i].time)
+      const started = await isTimeBeforeCurrent(hrefs[i].time);
       if (hrefs[i] && (hrefs[i].available24_7 || hrefs[i].withinTenMinutes || started)) {
-        const time = hrefs[i].time
+        const time = hrefs[i].time;
         const link = `https://streamed.su${hrefs[i].href}`;
         await page.goto(link, { waitUntil: "networkidle2" });
         const data = await page.evaluate(() => {
           const anchors = Array.from(document.querySelectorAll("a"));
 
-          return anchors.map((anchor,time) => {
+          return anchors.map((anchor, time) => {
             const h2 = anchor.querySelector("h2");
             const getName = (href) => {
               const regex = /watch\/([^\/]+)\//;
@@ -192,23 +191,23 @@ console.log(timeString)
               return div ? div.textContent.trim() : null;
             };
             const now = new Date();
-            const link =  Getlink(anchor.href)
-            const stream = Getstream(anchor.href)
+            const link = Getlink(anchor.href);
+            const stream = Getstream(anchor.href);
             return {
               href: anchor.href,
               Quality: h2 ? h2.textContent : null,
               Name: getName(anchor.href),
               date: now.toISOString(),
-              link: link ,
+              link: link,
               stream: stream,
-              language: getLanguage(anchor), // Extract language
+              language: getLanguage(anchor),
               iframeSrc: `https://embedme.top/embed/${link}/${stream}`,
             };
           }).filter((item) => item.Quality); // Filter out items without h2 text
         });
         // Add or update each game in the database
         data.forEach((item) => {
-          const item2 = {...item,time:time}
+          const item2 = { ...item, time: time };
           console.log(item2);
           AddGame(item2);
         });
