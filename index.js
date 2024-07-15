@@ -30,7 +30,7 @@ async function fetchYouTube() {
 async function fetchTg() {
   try {
     const response = await fetch("https://whatsapp-bot-md-1-pzms.onrender.com");
-    console.log"nYouTube kept alive");
+    console.log("YouTube kept alive");
   } catch (error) {
     console.error("Error fetching YouTube data:", error);
   }
