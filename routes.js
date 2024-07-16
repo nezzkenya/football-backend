@@ -33,12 +33,12 @@ function getNotStartedGames(games) {
   return upcomingGames;
 }
 
-
 router.get("/allgames", async (req, res) => {
   try {
     const collection = await db.collection("all-games");
-    const results = await collection.find({}).toArray();
-    const cg = await getNotStartedGames(results)
+    const results = await collection.find({}).project({ _id: 0 }).toArray();
+    const cg = getNotStartedGames(results);  // No need for await since it's not an async function
+
     const collection2 = await db.collection("games");
 
     const pipeline = [
@@ -53,7 +53,6 @@ router.get("/allgames", async (req, res) => {
       },
       {
         $project: {
-          _id: 0,
           Name: 1,
           link: 1,
         },
@@ -61,26 +60,12 @@ router.get("/allgames", async (req, res) => {
     ];
 
     const results2 = await collection2.aggregate(pipeline).toArray();
-    res.json({all:cg, live : results2}).status(200);
+
+    res.status(200).json({ all: cg, live: results2 });  // Status code should be set before sending JSON
 
   } catch (error) {
-    res.json("an error occurred").status(500);
-    console.log(error);
-  }
-});
-router.get("/123", async (req, res) => {
-  GetGames();
-  res.send("games fetched");
-});
-
-router.get("/", async (req, res) => {
-  try {
-    const collection = await db.collection("games");
-    const results = await collection.find({}).toArray();
-    res.json(results).status(200);
-  } catch (error) {
-    res.json("an error occurred").status(500);
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });  // Improved error response
   }
 });
 router.get("/game/:id", async (req, res) => {
@@ -93,26 +78,27 @@ router.get("/game/:id", async (req, res) => {
         Quality: 1,
         stream: 1,
         Name: 1,
-        language:1 ,
+        language: 1,
         _id: 0,
       })
       .toArray();
-    res.json(results).status(200);
+    res.status(200).json(results);
   } catch (error) {
-    res.json("an error occurred").status(500);
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
   }
 });
+
 router.get("/watch/:game/:stream", async (req, res) => {
   const stream = req.params.stream;
   const game = req.params.game;
   try {
     const collection = await db.collection("games");
-    const results = await collection.findOne({ stream: stream, link: game });
-    res.json(results).status(200);
+    const results = await collection.findOne({ stream: stream, link: game }, { projection: { Quality:1, Name : 1 , iframeSrc: 1} });  // Limiting fields to reduce payload
+    res.status(200).json(results);
   } catch (error) {
-    res.json("an error occurred").status(500);
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
   }
 });
 
