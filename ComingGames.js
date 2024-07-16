@@ -29,7 +29,7 @@ export default async function ComingGames() {
     const results = await page.evaluate(() => {
       // Query selector for all matching <a> tags
       const anchors = document.querySelectorAll(
-        "a.bg-secondary.transition-all"
+        "a"
       );
 
       // Array to hold the extracted data
