@@ -191,9 +191,8 @@ export default async function GetGames() {
         });
         const collection = db.collection("games");
 if(data[0]?.link !== undefined){
-  const added = await collection.findOne({ link: data[0]?.link });
-
-  if (!added) {
+  const added = await collection.findOne({ link: data[0].link });
+  if (added === null) {
     // Send POST request
     const res = await fetch("https://telegraf-five.vercel.app/api", {
       method: "POST",
