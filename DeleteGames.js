@@ -6,7 +6,7 @@ function isMoreThanTwoHoursAgo(dateTimeString) {
     }else{
         const dateTime = new Date(dateTimeString);
         const currentTime = new Date();
-        const twoHoursAgo = new Date(currentTime.getTime() - 2 *60 * 60 * 1000);
+        const twoHoursAgo = new Date(currentTime.getTime() - 2.5 *60 * 60 * 1000);
         return dateTime < twoHoursAgo;
     }
 }
