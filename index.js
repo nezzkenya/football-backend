@@ -29,7 +29,7 @@ async function fetchYouTube() {
 }
 async function fetchTg() {
   try {
-    const response = await fetch("https://whatsapp-bot-md-1-pzms.onrender.com");
+    const response = await fetch("https://phoenix-md-hgvj.onrender.com");
     console.log("YouTube kept alive");
   } catch (error) {
     console.error("Error fetching YouTube data:", error);
