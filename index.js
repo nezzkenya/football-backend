@@ -27,13 +27,11 @@ async function fetchYouTube() {
   }
 }
 
-// Initial fetch
 fetchGames();
 fetchYouTube();
 
-// Set interval to call fetchGames and fetchYouTube every 10 minutes
-const gamesInterval = setInterval(fetchGames, REFRESH_INTERVAL);
-const youtubeInterval = setInterval(fetchYouTube, REFRESH_INTERVAL);
+setInterval(fetchGames, REFRESH_INTERVAL);
+setInterval(fetchYouTube, REFRESH_INTERVAL);
 
 app.use(cors());
 app.use(express.json());
