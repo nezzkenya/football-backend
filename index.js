@@ -20,7 +20,7 @@ async function fetchGames() {
 }
 async function fetchYouTube() {
   try {
-    const response = await fetch("https://youtube-project-cil7.onrender.com");
+    const response = await fetch("https://youtube-project-3-lljx.onrender.com");
     const data = await response;
     console.log(data, "\nYouTube kept alive");
   } catch (error) {
@@ -30,7 +30,6 @@ async function fetchYouTube() {
 
 fetchGames();
 fetchYouTube();
-fetchTg();
 
 setInterval(fetchGames, REFRESH_INTERVAL);
 setInterval(fetchYouTube, REFRESH_INTERVAL);
