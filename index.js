@@ -27,12 +27,23 @@ async function fetchYouTube() {
     console.error("Error fetching YouTube data:", error);
   }
 }
+async function fetchWP() {
+  try {
+    const response = await fetch("https://wallpaper-scrape-post.onrender.com");
+    const data = await response;
+    console.log(data, "\n tg kept alive");
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+  }
+}
 
+fetchWP()
 fetchGames();
 fetchYouTube();
 
 setInterval(fetchGames, REFRESH_INTERVAL);
 setInterval(fetchYouTube, REFRESH_INTERVAL);
+setInterval(fetchWP, REFRESH_INTERVAL);
 
 app.use(cors());
 app.use(express.json());
