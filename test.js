@@ -16,7 +16,7 @@ export default async function ComingGames() {
 
     const page = await browser.newPage();
 
-    await page.goto("https://youtube.com/live/a6F84LJoYUc?feature=share", {
+    await page.goto("https://youtube.com/live/bWT6OedW-oY?feature=share", {
       waitUntil: "networkidle2",
       timeout: 60000, // Increase timeout to 60 seconds
     });

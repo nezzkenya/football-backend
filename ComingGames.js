@@ -63,10 +63,8 @@ export default async function ComingGames() {
     // Log the results
     console.log(results);
 
-    // Clear existing data in the collection
     await db.collection("all-games").deleteMany({});
 
-    // Insert new data into the collection
     await db.collection("all-games").insertMany(results);
 
     // Close the browser
