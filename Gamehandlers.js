@@ -25,10 +25,12 @@ export async function getLivegames(req, res) {
             {
                 $facet: {
                     "allDayGames": [
-                        { $match: { time: "24/7" } }
+                        { $match: { time: "24/7" } },
+                        { $sort: { Name: 1 } }  // Sorting by Name within the "allDayGames" facet
                     ],
                     "timedGames": [
-                        { $match: { time: { $regex: /^[0-9]{1,2}:[0-9]{2} [AP]M$/ } } }
+                        { $match: { time: { $regex: /^[0-9]{1,2}:[0-9]{2} [AP]M$/ } } },
+                        { $sort: { Name: 1 } }  // Sorting by Name within the "timedGames" facet
                     ]
                 }
             }

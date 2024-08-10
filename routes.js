@@ -37,7 +37,7 @@ function getNotStartedGames(games) {
 router.get("/coming", async (req, res) => {
   try {
     const collection = await db.collection("all-games");
-    const results = await collection.find({}).project({ _id: 0,href: 0 }).toArray();
+    const results = await collection.find({}).project({ _id: 0,href: 0 }).sort({title:1}).toArray();
     const cg = getNotStartedGames(results); 
 
     res.status(200).json({coming: cg }); 
