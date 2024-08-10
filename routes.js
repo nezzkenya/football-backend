@@ -1,5 +1,6 @@
 import express from "express";
 import db from "./connection.js";
+import { getLivegames } from "./Gamehandlers.js";
 const router = express.Router();
 
 // Function to filter games
@@ -33,41 +34,23 @@ function getNotStartedGames(games) {
   return upcomingGames;
 }
 
-router.get("/allgames", async (req, res) => {
+router.get("/coming", async (req, res) => {
   try {
     const collection = await db.collection("all-games");
-    const results = await collection.find({}).project({ _id: 0 }).toArray();
-    const cg = getNotStartedGames(results);  // No need for await since it's not an async function
+    const results = await collection.find({}).project({ _id: 0,href: 0 }).toArray();
+    const cg = getNotStartedGames(results); 
 
-    const collection2 = await db.collection("games");
-
-    const pipeline = [
-      {
-        $group: {
-          _id: "$Name",
-          document: { $first: "$$ROOT" },
-        },
-      },
-      {
-        $replaceRoot: { newRoot: "$document" },
-      },
-      {
-        $project: {
-          Name: 1,
-          link: 1,
-        },
-      },
-    ];
-
-    const results2 = await collection2.aggregate(pipeline).toArray();
-
-    res.status(200).json({ all: cg, live: results2 });  // Status code should be set before sending JSON
+    res.status(200).json({coming: cg }); 
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "An error occurred" });  // Improved error response
+    res.status(500).json({ message: "An error occurred" }); 
   }
 });
+
+router.get("/live", async (req,res)=>{
+  await getLivegames(req,res)
+})
 router.get("/game/:id", async (req, res) => {
   const link = req.params.id;
   try {
